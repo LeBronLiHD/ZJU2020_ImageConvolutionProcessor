@@ -1,0 +1,208 @@
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include <QMessageBox>
+#include <QFileDialog>
+#include <QPixmap>
+#include <QImage>
+#include <QWidget>
+#include <QFont>
+#include <QString>
+#include "timer.h"
+#include <QDebug>
+#include <QElapsedTimer>
+
+using namespace std;
+using namespace std::chrono;
+using namespace std::this_thread;
+
+Timer_Convolution Obj;
+
+int startTimerCounting = 0;
+int endTimerCounting = 0;
+
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    ui->pushButton_exit->setStyleSheet("color : red"); // set button "Exit" red
+    QString BackImageStringInit = "F:/QT Projects/Timer_One_Qt/null.png";
+    QPixmap BackImageInit(BackImageStringInit);
+    ui->label_img->setScaledContents(true); // 允许尺寸被修改
+    ui->label_img->setPixmap(BackImageInit.scaled(this->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->label_img_2->setScaledContents(true); // 允许尺寸被修改
+    ui->label_img_2->setPixmap(BackImageInit.scaled(this->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    // 使图片适应label的尺寸
+    QFont timeFont("Microsoft YaHei",10,75); // 字体：Microsoft YaHei  字号：10  加粗系数：75
+    QFont matrixFont("Geogria",10,75); // 字体：Geogria  字号：10  加粗系数：75
+    ui->label_time->setFont(timeFont); // 修改label内文本的字体格式
+    ui->label_timerDocu->setFont(timeFont);
+    ui->label_timerDocu->setText(" N U L L");
+    ui->label_oriImage->setFont(timeFont);
+    ui->label_finalImage->setFont(timeFont);
+    ui->label_conMatrix->setFont(matrixFont);
+    ui->label_conMatrix->setText("Convolution\n 3*3 Matrix");
+    ui->pushButton_matrix->setText("Random\n3*3 Matrix");
+    ui->pushButton_userMatrix->setText("Customize\n3*3 Matrix");
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::on_pushButton_exit_clicked()
+{
+    if (!(QMessageBox::information(this,tr("系统提示"),tr("\n确认离开？\n"),tr("Yes"),tr("No"))))
+     {
+        QMessageBox::about(this,tr("系统提示"),tr("\n欢迎再来哦 ^_^\n"));
+        this->close();
+     }
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    QMessageBox::about(this,tr("人员信息"),tr("姓名：李浩东\n学号：3190104890\n选题：第一题\n基于：Qt Creator 5.9.0\n计时：计时器类在timer.h文件\n日期：2021年1月2日\n"));
+}
+
+void MainWindow::on_pushButton_read_Image_clicked()
+{
+    QString filename;
+    filename=QFileDialog::getOpenFileName(this,tr("选择图像"),"",tr("Images (*.png *.bmp *.jpg *.tif *.GIF )"));
+    if(filename.isEmpty())
+    {
+        QMessageBox::information(this,tr("系统提示"),tr("打开图像失败!"));
+        return;
+    }
+    else
+    {
+        QPixmap MyImage(filename);
+        if(MyImage.isNull()) // 加载图像失败
+        {
+            QMessageBox::information(this,tr("系统提示"),tr("打开图像失败!"));
+            return;
+        }
+        else
+        {
+            // 拉伸图片
+            ui->label_img->setScaledContents(true);
+            ui->label_img->setPixmap(MyImage.scaled(this->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+            ui->label_img_2->setScaledContents(true);
+            ui->label_img_2->setPixmap(MyImage.scaled(this->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+        }
+    }
+}
+
+void MainWindow::on_label_img_linkActivated(const QString &link)
+{
+
+}
+
+void MainWindow::on_pushButton_clear_Image_clicked()
+{
+    QString BackImageString = "F:/QT Projects/Timer_One_Qt/null.png";
+    QPixmap BackImage(BackImageString);
+    ui->label_img->setScaledContents(true);
+    ui->label_img->setPixmap(BackImage.scaled(this->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui->label_img_2->setScaledContents(true);
+    ui->label_img_2->setPixmap(BackImage.scaled(this->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+}
+
+void MainWindow::on_label_time_linkActivated(const QString &link)
+{
+
+}
+
+void MainWindow::on_pushButton_startTimer_clicked()
+{
+    if(!startTimerCounting)
+    {
+        startTimerCounting = 1;
+        endTimerCounting = 0;
+        ui->label_timerDocu->setText(" Timer working...");
+        Obj.Refresh();
+    }
+    else
+        QMessageBox::information(this,tr("系统提示"),tr("计时器工作中，无法操作！"));
+    return;
+}
+
+void MainWindow::on_pushButton_endTimer_clicked()
+{
+    if(!endTimerCounting)
+    {
+        endTimerCounting = 1;
+        startTimerCounting = 0;
+        long double durationCount = Obj.Duration();
+        QString trDurationCount = QString::number(durationCount, 'f', 6);
+        ui->label_timerDocu->setText(" " + trDurationCount + " ms");
+        QString trMessage = "经过时间: " + trDurationCount + " ms";
+        QMessageBox::information(this,tr("系统提示"),trMessage);
+    }
+    else
+        QMessageBox::information(this,tr("系统提示"),tr("计时器不在工作，操作无效！"));
+    ui->label_timerDocu->setText(" N U L L");
+}
+
+void MainWindow::on_pushButton_matrix_clicked()
+{
+    QMessageBox::information(this,tr("系统提示"),tr("on_pushButton_matrix_clicked()"));
+}
+
+void MainWindow::on_pushButton_testTimer_clicked()
+{
+    if (QMessageBox::information(this,tr("系统提示"),tr("\n开始测试？\n"),tr("Yes"),tr("No")))
+        return;
+    if(!startTimerCounting)
+    {
+        startTimerCounting = 1;
+        endTimerCounting = 0;
+        ui->label_timerDocu->setText(" Timer working...");
+        Obj.Refresh();
+    }
+    else
+    {
+        QMessageBox::information(this,tr("系统提示"),tr("计时器工作中，无法操作！"));
+        return;
+    }
+
+    QMessageBox *box = new QMessageBox(QMessageBox::Information,tr("系统提示"),tr("\n测试中...\n\n2秒钟后弹窗自动关闭...\n"));
+    QTimer::singleShot(1974,box,SLOT(accept()));
+    // 也可将accept改为close
+    // 此方法精度较低，误差较大，故用1974代替2000
+    box->exec();
+    // or: box->show();
+
+    // 2秒延时测试计时器功能
+    // or: sleep_for(seconds(2));
+    //     使用sleep_for函数测试计时器功能
+    // or: QElapsedTimer Test;
+    //     Test.start();
+    //     while(Test.elapsed()<2000);
+    // or: while (Obj.Duration() < 2000)
+    //     {...}
+    if(!endTimerCounting)
+    {
+        endTimerCounting = 1;
+        startTimerCounting = 0;
+        long double durationCount = Obj.Duration();
+        QString trDurationCount = QString::number(durationCount, 'f', 6);
+        ui->label_timerDocu->setText(" " + trDurationCount + " ms");
+        QString trMessage = "经过时间: " + trDurationCount + " ms";
+        QMessageBox::information(this,tr("系统提示"),trMessage);
+    }
+    else
+        QMessageBox::information(this,tr("系统提示"),tr("计时器不在工作，操作无效！"));
+    ui->label_timerDocu->setText(" N U L L");
+    return;
+}
+
+void MainWindow::on_label_img_2_linkActivated(const QString &link)
+{
+
+}
+
+void MainWindow::on_pushButton_userMatrix_clicked()
+{
+    QMessageBox::information(this,tr("系统提示"),tr("on_pushButton_userMatrix_clicked()"));
+}
